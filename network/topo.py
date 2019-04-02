@@ -5,8 +5,9 @@ from mininet.net import Mininet
 from mininet.link import TCLink
 from mininet.cli import CLI
 
-DEBUG = False
+DEBUG = True
 NETMASK = "255.255.255.0"
+PREFIX = "10.1."
 
 # utils functions
 def log(*args, **kwargs):
@@ -64,21 +65,23 @@ class MPTopo(BaseTopo):
         self.server = self.net.getNodeByName(self.server)
         self.router = self.net.getNodeByName(self.router)
         for i in range(self.paths):
-            subnet = "10.1." + str(i)
+            subnet = PREFIX + str(i)
             interfaceUp(self.client, i, subnet + ".1")
             interfaceUp(self.router, i, subnet + ".2")
             self.configClient(i, subnet)
-        subnet = "10.1." + str(self.paths)
+        # add default path
+        cmd(self.client, "ip route add default via " + PREFIX + "0.2")
+        subnet = PREFIX + str(self.paths)
         interfaceUp(self.server, 0, subnet + ".1")
         interfaceUp(self.router, self.paths, subnet + ".2")
         cmd(self.server, "ip route add default via " + subnet + ".2")
     
     def testConnection(self):
         print("test connection")
-        server = "10.1." + str(self.paths) + ".1"
+        server = PREFIX + str(self.paths) + ".1"
         for i in range(self.paths):
             print("path " + str(i))
-            client = "10.1." + str(i) + ".1"
+            client = PREFIX + str(i) + ".1"
             tail = " >/dev/null 2> /dev/null || echo 1"
             res = cmd(self.client, "ping -qc 1 -I " + client + " " + server + tail)
             if res != "":
