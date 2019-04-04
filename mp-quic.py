@@ -1,8 +1,8 @@
 from __future__ import print_function
-from os import popen
 from time import sleep, time
 from network.exe import Exe, kill
-from network.topo import MPTopo, PREFIX
+from network.topo import MPTopo, PREFIX, log
+from settings import SETTINGS, TESTS, SIZE
 
 class MPQuicExe(Exe):
     def __init__(self, topo, size):
@@ -18,19 +18,37 @@ class MPQuicExe(Exe):
         st = time()
         self.logRun(self.topo.client, "client", 'bin/client -url="https://' + server + '"')
         st = time() - st
-        print("size: %d, time: %.2fs, bd: %.2fMbps" % (self.size, st, self.size / st * 8 / 1000000))
 
-        sleep(1)
+        bd = self.size / st * 8.0 / 1000.0
+        print("size: %d, time: %.2fs, bd: %.0fkbps" % (self.size, st, bd))
+
+        sleep(0.1)
         kill(self.topo.server, spid)
+
+        return bd
+    
+    def runBatch(self, setting, test):
+        # line buffer
+        fout = open(self.path + "/batch.log", "w", 1)
+        for s in setting:
+            for i in range(self.topo.paths):
+                t = 3 * i
+                self.topo.configBothLink(i, int(s[t] * 1000), int(s[t + 1] * 1000), int(s[t + 2] * 1000))
+
+            for _ in range(test):
+                bd = self.run()
+                out = " ".join(tuple(str(x) for x in s))
+                out = out + " " + str(bd)
+                print(out, file=fout)
+                log("output:", out)
+        
+        fout.close()
 
 if __name__ == "__main__":
     topo = MPTopo()
     topo.setupNet()
-    topo.configBothLink(0, "5Mbit", "10ms")
-    topo.configBothLink(1, "10Mbit", "30ms")
     topo.testConnection()
     # topo.getCLI()
-    # 20MB
-    exe = MPQuicExe(topo, 20 * 1024 * 1024)
-    exe.run()
+    exe = MPQuicExe(topo, SIZE)
+    exe.runBatch(SETTINGS, TESTS)
     topo.stopNet()

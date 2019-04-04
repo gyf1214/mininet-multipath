@@ -1,5 +1,6 @@
 from __future__ import print_function
 from sys import stderr
+from math import ceil
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.link import TCLink
@@ -19,14 +20,15 @@ def cmd(host, c):
     return host.cmd(c)
 
 def interfaceUp(host, eth, ip, netmask=NETMASK):
-    cmd(host, "ifconfig " + host.name + "-eth" + str(eth) + " " + ip + " netmask " + netmask)
+    # hardcode 20000 txqueuelen for a BDP of around 100Mbps * 2400ms
+    cmd(host, "ifconfig " + host.name + "-eth" + str(eth) + " " + ip + " netmask " + netmask + " txqueuelen 20000")
 
-def tcConfig(host, eth, bd, delay):
+def tcConfig(host, eth, bd, delay, limit):
     eth = " dev " + host.name + "-eth" + str(eth)
     cmd(host, "tc qdisc del" + eth + " root")
     cmd(host, "tc qdisc add" + eth + " root handle 5:0 htb default 1")
-    cmd(host, "tc class add" + eth + " parent 5:0 classid 5:1 htb rate " + bd + " burst 15k")
-    cmd(host, "tc qdisc add" + eth + " parent 5:1 handle 10: netem delay " + delay)
+    cmd(host, "tc class add" + eth + " parent 5:0 classid 5:1 htb rate " + str(bd) + "kbit burst 15k")
+    cmd(host, "tc qdisc add" + eth + " parent 5:1 handle 10: netem delay " + str(delay) + "us limit " + str(limit))
 
 class BaseTopo(Topo):
     "Basic topo"
@@ -83,13 +85,18 @@ class MPTopo(BaseTopo):
         interfaceUp(self.router, self.paths, subnet + ".2")
         cmd(self.server, "ip route add default via " + subnet + ".2")
     
-    def configLink(self, path, bd, delay, uplink=False):
+    def configLink(self, path, bd, delay, limit, uplink=False):
         host = self.client if uplink else self.router
-        tcConfig(host, path, bd, delay)
+        tcConfig(host, path, bd, delay, limit)
     
-    def configBothLink(self, path, bd, delay):
-        self.configLink(path, bd, delay, False)
-        self.configLink(path, bd, delay, True)
+    def configBothLink(self, path, bd, rtt, queue_delay):
+        "bd in kbps, rtt & queue_delay in us"
+        limit = int(ceil(float(rtt + queue_delay) * float(bd) / 12000000.0))
+        if limit < 1:
+            limit = 1
+        # we split rtt on uplink & downlink
+        self.configLink(path, bd, rtt / 2, limit, False)
+        self.configLink(path, bd, rtt / 2, limit, True)
     
     def testConnection(self):
         print("test connection")
