@@ -1,4 +1,5 @@
 from __future__ import print_function
+from os import popen
 from time import sleep, time
 from network.exe import Exe, kill
 from network.topo import MPTopo, PREFIX
