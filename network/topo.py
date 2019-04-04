@@ -21,6 +21,13 @@ def cmd(host, c):
 def interfaceUp(host, eth, ip, netmask=NETMASK):
     cmd(host, "ifconfig " + host.name + "-eth" + str(eth) + " " + ip + " netmask " + netmask)
 
+def tcConfig(host, eth, bd, delay):
+    eth = " dev " + host.name + "-eth" + str(eth)
+    cmd(host, "tc qdisc del" + eth + " root")
+    cmd(host, "tc qdisc add" + eth + " root handle 5:0 htb default 1")
+    cmd(host, "tc class add" + eth + " parent 5:0 classid 5:1 htb rate " + bd + " burst 15k")
+    cmd(host, "tc qdisc add" + eth + " parent 5:1 handle 10: netem delay " + delay)
+
 class BaseTopo(Topo):
     "Basic topo"
     def __init__(self):
@@ -76,6 +83,14 @@ class MPTopo(BaseTopo):
         interfaceUp(self.router, self.paths, subnet + ".2")
         cmd(self.server, "ip route add default via " + subnet + ".2")
     
+    def configLink(self, path, bd, delay, uplink=False):
+        host = self.client if uplink else self.router
+        tcConfig(host, path, bd, delay)
+    
+    def configBothLink(self, path, bd, delay):
+        self.configLink(path, bd, delay, False)
+        self.configLink(path, bd, delay, True)
+    
     def testConnection(self):
         print("test connection")
         server = PREFIX + str(self.paths) + ".1"
@@ -85,7 +100,7 @@ class MPTopo(BaseTopo):
             tail = " >/dev/null 2> /dev/null || echo 1"
             res = cmd(self.client, "ping -qc 1 -I " + client + " " + server + tail)
             if res != "":
-                print("failed client -> server")
+                print("ping failed client -> server")
             res = cmd(self.server, "ping -qc 1 " + client + tail)
             if res != "":
                 print("failed server -> client")
