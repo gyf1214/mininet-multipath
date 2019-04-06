@@ -21,14 +21,14 @@ def cmd(host, c):
 
 def interfaceUp(host, eth, ip, netmask=NETMASK):
     # hardcode 20000 txqueuelen for a BDP of around 100Mbps * 2400ms
-    cmd(host, "ifconfig " + host.name + "-eth" + str(eth) + " " + ip + " netmask " + netmask + " txqueuelen 20000")
+    cmd(host, "ifconfig " + host.name + "-eth" + str(eth) + " " + ip + " netmask " + netmask)
 
-def tcConfig(host, eth, bd, delay, limit):
+def tcConfig(host, eth, bd, delay):
     eth = " dev " + host.name + "-eth" + str(eth)
     cmd(host, "tc qdisc del" + eth + " root")
     cmd(host, "tc qdisc add" + eth + " root handle 5:0 htb default 1")
     cmd(host, "tc class add" + eth + " parent 5:0 classid 5:1 htb rate " + str(bd) + "kbit burst 15k")
-    cmd(host, "tc qdisc add" + eth + " parent 5:1 handle 10: netem delay " + str(delay) + "us limit " + str(limit))
+    cmd(host, "tc qdisc add" + eth + " parent 5:1 handle 10: netem delay " + str(delay) + "us")
 
 class BaseTopo(Topo):
     "Basic topo"
@@ -85,18 +85,15 @@ class MPTopo(BaseTopo):
         interfaceUp(self.router, self.paths, subnet + ".2")
         cmd(self.server, "ip route add default via " + subnet + ".2")
     
-    def configLink(self, path, bd, delay, limit, uplink=False):
+    def configLink(self, path, bd, delay, uplink=False):
         host = self.client if uplink else self.router
-        tcConfig(host, path, bd, delay, limit)
+        tcConfig(host, path, bd, delay)
     
-    def configBothLink(self, path, bd, rtt, queue_delay):
+    def configBothLink(self, path, bd, rtt):
         "bd in kbps, rtt & queue_delay in us"
-        limit = int(ceil(float(rtt + queue_delay) * float(bd) / 12000000.0))
-        if limit < 1:
-            limit = 1
         # we split rtt on uplink & downlink
-        self.configLink(path, bd, rtt / 2, limit, False)
-        self.configLink(path, bd, rtt / 2, limit, True)
+        self.configLink(path, bd, rtt / 2, False)
+        self.configLink(path, bd, rtt / 2, True)
     
     def testConnection(self):
         print("test connection")

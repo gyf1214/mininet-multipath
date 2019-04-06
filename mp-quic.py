@@ -32,8 +32,8 @@ class MPQuicExe(Exe):
         fout = open(self.path + "/batch.log", "w", 1)
         for s in setting:
             for i in range(self.topo.paths):
-                t = 3 * i
-                self.topo.configBothLink(i, int(s[t] * 1000), int(s[t + 1] * 1000), int(s[t + 2] * 1000))
+                t = 2 * i
+                self.topo.configBothLink(i, int(s[t] * 1000), int(s[t + 1] * 1000))
 
             for _ in range(test):
                 bd = self.run()

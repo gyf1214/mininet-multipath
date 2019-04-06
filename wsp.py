@@ -36,6 +36,6 @@ def wsp(dims, size, dmin):
         points = next
 
 if __name__ == "__main__":
-    a = wsp([(0, 100), (0, 50), (0, 100), (0, 100), (0, 50), (0, 100)], 200, 1)
+    a = wsp([(0, 10), (0, 100), (0, 10), (0, 100)], 200, 1)
     print(a)
     print(len(a))
