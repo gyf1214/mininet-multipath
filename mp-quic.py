@@ -48,7 +48,17 @@ if __name__ == "__main__":
     topo = MPTopo()
     topo.setupNet()
     topo.testConnection()
+    # CLI
     # topo.getCLI()
+
+    # batch test
     exe = MPQuicExe(topo, SIZE)
     exe.runBatch(SETTINGS, TESTS)
+
+    # small test
+    # exe = MPQuicExe(topo, SIZE)
+    # topo.configBothLink(0, 5000, 20000)
+    # topo.configBothLink(1, 10000, 60000)
+    # exe.run()
+
     topo.stopNet()
