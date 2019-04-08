@@ -8,7 +8,7 @@ clean :
 
 force: clean default
 
-bin/% : src/%.go
-	GOOS=linux GOARCH=amd64 go build -o $@ $<
+bin/% : src/%
+	GOOS=linux GOARCH=amd64 go build -o $@ ./$<
 
 .PHONY : default clean force
