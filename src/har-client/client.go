@@ -99,7 +99,9 @@ func (c *client) handleHeader() error {
 		if size <= 0 {
 			size = 4096
 		}
-		if ch, ok := c.dataChans[int(headerFrame.StreamID)]; ok {
+		sid := int(headerFrame.StreamID)
+		log.Printf("stream %v size %v", sid, size)
+		if ch, ok := c.dataChans[sid]; ok {
 			ch <- size
 		}
 	}
@@ -115,6 +117,7 @@ func (c *client) getPage(req har.Request) error {
 
 	sid := int(data.StreamID())
 	c.dataChans[sid] = make(chan int)
+	log.Printf("open stream %v for %v", sid, encodeHeaderHAR(req.Headers))
 
 	var header bytes.Buffer
 	h2pack := hpack.NewEncoder(&header)
@@ -143,6 +146,7 @@ func (c *client) getPage(req har.Request) error {
 			return err
 		}
 	}
+	log.Printf("finish stream %v", sid)
 
 	c.initiate(req.Url)
 
@@ -159,17 +163,14 @@ func (c *client) doGetPage(req har.Request) {
 
 // very slow implementation
 func (c *client) initiate(url string) {
-	log.Println(len(db.data))
 	for idx, ent := range db.data {
 		if db.vis[idx] {
 			continue
 		}
 		initiator := getInitiator(ent.Initiator)
-		log.Println(encodeHeaderHAR(ent.Request.Headers), initiator)
 		if initiator == url {
 			db.vis[idx] = true
 			c.wg.Add(1)
-			log.Println(encodeHeaderHAR(ent.Request.Headers))
 			go c.doGetPage(ent.Request)
 		}
 	}

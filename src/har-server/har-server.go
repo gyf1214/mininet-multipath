@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/lucas-clemente/quic-go"
 )
@@ -16,19 +15,6 @@ var (
 	keyFile  = flag.String("key", "bin/privkey.pem", "key")
 	harFile  = flag.String("har", "", "har")
 )
-
-func handleStreams(sess quic.Session, streams map[int]quic.Stream, streamMutex *sync.Mutex) {
-	for {
-		if str, err := sess.AcceptStream(); err == nil {
-			streamMutex.Lock()
-			streams[int(str.StreamID())] = str
-			streamMutex.Unlock()
-		} else {
-			log.Println(err)
-			return
-		}
-	}
-}
 
 func workSession(sess quic.Session) error {
 	defer sess.Close(nil)

@@ -15,6 +15,27 @@ type database struct {
 
 var db database
 
+func checkEnt(ent har.Entry) bool {
+	if ent.Request.HttpVersion != "http/2.0" && ent.Request.HttpVersion != "http/2.0+quic/43" {
+		return false
+	}
+
+	hasLength, hasAuthority := false, false
+	for _, header := range ent.Request.Headers {
+		if header.Name == ":authority" {
+			hasAuthority = true
+			break
+		}
+	}
+	for _, header := range ent.Response.Headers {
+		if header.Name == "content-length" {
+			hasLength = true
+			break
+		}
+	}
+	return hasLength && hasAuthority
+}
+
 func encodeHeaderHAR(headers []har.NVP) string {
 	var path, authority, method string
 	for _, header := range headers {
@@ -40,13 +61,9 @@ func (d *database) load(r io.Reader) error {
 	}
 	// log.Println(full)
 	for _, ent := range full.Log.Entries {
-		req := ent.Request
-
-		// ignore non-http/2
-		if req.HttpVersion != "http/2.0" && req.HttpVersion != "http/2.0+quic/43" {
+		if !checkEnt(ent) {
 			continue
 		}
-
 		d.data = append(d.data, ent)
 	}
 	d.vis = make([]bool, len(d.data))

@@ -13,10 +13,19 @@ import (
 	"golang.org/x/net/http2/hpack"
 )
 
+type streamCreator interface {
+	quic.Session
+	GetOrOpenStream(quic.StreamID) (quic.Stream, error)
+}
+
+type remoteCloser interface {
+	CloseRemote(quic.ByteCount)
+}
+
 type server struct {
-	sess      quic.Session
-	header    quic.Stream
-	data      map[int]chan quic.Stream
+	sess   quic.Session
+	header quic.Stream
+	// data      map[int]chan quic.Stream
 	dataMutex sync.Mutex
 
 	h2framer *http2.Framer
@@ -29,39 +38,40 @@ func newServer(sess quic.Session) (*server, error) {
 		return nil, err
 	}
 	ss := &server{
-		sess:     sess,
-		header:   header,
-		data:     make(map[int]chan quic.Stream),
+		sess:   sess,
+		header: header,
+		// data:     make(map[int]chan quic.Stream),
 		h2framer: http2.NewFramer(nil, header),
 		h2pack:   hpack.NewDecoder(4096, nil),
 	}
-	go ss.handleStreams()
+	// go ss.handleStreams()
 	return ss, nil
 }
 
-func (s *server) addStream(sid int) {
-	s.dataMutex.Lock()
-	if _, ok := s.data[sid]; !ok {
-		s.data[sid] = make(chan quic.Stream)
-	}
-	s.dataMutex.Unlock()
-}
+// func (s *server) addStream(sid int) {
+// 	s.dataMutex.Lock()
+// 	if _, ok := s.data[sid]; !ok {
+// 		s.data[sid] = make(chan quic.Stream)
+// 	}
+// 	s.dataMutex.Unlock()
+// }
 
-func (s *server) handleStreams() error {
-	for {
-		if str, err := s.sess.AcceptStream(); err == nil {
-			sid := int(str.StreamID())
-			log.Println("accept stream", sid)
-			s.addStream(sid)
-			go func() {
-				s.data[sid] <- str
-			}()
-		} else {
-			log.Println(err)
-			return err
-		}
-	}
-}
+// func (s *server) handleStreams() error {
+// 	for {
+// 		log.Println("handle streams")
+// 		if str, err := s.sess.AcceptStream(); err == nil {
+// 			sid := int(str.StreamID())
+// 			log.Println("accept stream", sid)
+// 			s.addStream(sid)
+// 			go func() {
+// 				s.data[sid] <- str
+// 			}()
+// 		} else {
+// 			log.Println(err)
+// 			return err
+// 		}
+// 	}
+// }
 
 func encodeHeader(headers []hpack.HeaderField) string {
 	var path, authority, method string
@@ -79,7 +89,7 @@ func encodeHeader(headers []hpack.HeaderField) string {
 }
 
 func (s *server) handleData(stream quic.Stream, enc string) {
-	// get the FIN
+	stream.(remoteCloser).CloseRemote(0)
 	stream.Read([]byte{0})
 
 	if resp, ok := db.data[enc]; ok {
@@ -115,11 +125,11 @@ func (s *server) handleData(stream quic.Stream, enc string) {
 		log.Printf("response %v not found, ignore", enc)
 	}
 
-	sid := int(stream.StreamID())
+	// sid := int(stream.StreamID())
 	stream.Close()
-	s.dataMutex.Lock()
-	delete(s.data, sid)
-	s.dataMutex.Unlock()
+	// s.dataMutex.Lock()
+	// delete(s.data, sid)
+	// s.dataMutex.Unlock()
 }
 
 // returns true if close the connection
@@ -138,9 +148,13 @@ func (s *server) acceptHeader() (bool, error) {
 	}
 
 	enc := encodeHeader(headers)
-	sid := int(headerFrame.StreamID)
-	s.addStream(sid)
-	stream := <-s.data[sid]
+	sid := quic.StreamID(headerFrame.StreamID)
+	// s.addStream(sid)
+	// stream := <-s.data[sid]
+	stream, err := s.sess.(streamCreator).GetOrOpenStream(sid)
+	if err != nil {
+		return true, err
+	}
 
 	log.Printf("stream %v handle %v", sid, enc)
 	go s.handleData(stream, enc)
