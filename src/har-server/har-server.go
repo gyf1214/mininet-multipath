@@ -82,6 +82,8 @@ func initDB() error {
 }
 
 func main() {
+	flag.Parse()
+
 	err := initDB()
 	if err != nil {
 		log.Fatal(err)

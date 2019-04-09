@@ -9,7 +9,8 @@ import (
 )
 
 type database struct {
-	data map[string]har.Request
+	data []har.Entry
+	vis  []bool
 }
 
 var db database
@@ -46,9 +47,9 @@ func (d *database) load(r io.Reader) error {
 			continue
 		}
 
-		enc := encodeHeaderHAR(req.Headers)
-		d.data[enc] = req
+		d.data = append(d.data, ent)
 	}
+	d.vis = make([]bool, len(d.data))
 
 	return nil
 }
