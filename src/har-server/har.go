@@ -32,13 +32,14 @@ func encodeHeaderHAR(headers []har.NVP) string {
 func (d *database) load(r io.Reader) error {
 	dec := json.NewDecoder(r)
 
-	var full struct{ log har.HAR }
+	var full struct{ Log har.HAR }
 	err := dec.Decode(&full)
 	if err != nil {
 		return err
 	}
 
-	for _, ent := range full.log.Entries {
+	d.data = make(map[string]har.Response)
+	for _, ent := range full.Log.Entries {
 		req := ent.Request
 		resp := ent.Response
 

@@ -83,6 +83,7 @@ func initDB() error {
 
 func main() {
 	flag.Parse()
+	quic.SetLogLevel("info")
 
 	err := initDB()
 	if err != nil {

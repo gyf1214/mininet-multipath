@@ -16,7 +16,7 @@ import (
 type server struct {
 	sess      quic.Session
 	header    quic.Stream
-	data      map[int]quic.Stream
+	data      map[int]chan quic.Stream
 	dataMutex sync.Mutex
 
 	h2framer *http2.Framer
@@ -31,7 +31,7 @@ func newServer(sess quic.Session) (*server, error) {
 	ss := &server{
 		sess:     sess,
 		header:   header,
-		data:     make(map[int]quic.Stream),
+		data:     make(map[int]chan quic.Stream),
 		h2framer: http2.NewFramer(nil, header),
 		h2pack:   hpack.NewDecoder(4096, nil),
 	}
@@ -39,13 +39,25 @@ func newServer(sess quic.Session) (*server, error) {
 	return ss, nil
 }
 
+func (s *server) addStream(sid int) {
+	s.dataMutex.Lock()
+	if _, ok := s.data[sid]; !ok {
+		s.data[sid] = make(chan quic.Stream)
+	}
+	s.dataMutex.Unlock()
+}
+
 func (s *server) handleStreams() error {
 	for {
 		if str, err := s.sess.AcceptStream(); err == nil {
-			s.dataMutex.Lock()
-			s.data[int(str.StreamID())] = str
-			s.dataMutex.Unlock()
+			sid := int(str.StreamID())
+			log.Println("accept stream", sid)
+			s.addStream(sid)
+			go func() {
+				s.data[sid] <- str
+			}()
 		} else {
+			log.Println(err)
 			return err
 		}
 	}
@@ -73,7 +85,7 @@ func (s *server) handleData(stream quic.Stream, enc string) {
 	if resp, ok := db.data[enc]; ok {
 		var headers bytes.Buffer
 		enc := hpack.NewEncoder(&headers)
-		enc.WriteField(hpack.HeaderField{Name: ":status", Value: resp.Status})
+		enc.WriteField(hpack.HeaderField{Name: ":status", Value: strconv.Itoa(resp.Status)})
 
 		var length int
 		for _, h := range resp.Headers {
@@ -127,9 +139,8 @@ func (s *server) acceptHeader() (bool, error) {
 
 	enc := encodeHeader(headers)
 	sid := int(headerFrame.StreamID)
-	s.dataMutex.Lock()
-	stream := s.data[sid]
-	s.dataMutex.Unlock()
+	s.addStream(sid)
+	stream := <-s.data[sid]
 
 	log.Printf("stream %v handle %v", sid, enc)
 	go s.handleData(stream, enc)

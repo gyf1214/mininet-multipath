@@ -1,4 +1,4 @@
-targets=client server har-server
+targets=client server har-server har-client
 bins=$(patsubst %,bin/%,$(targets))
 
 default : $(bins)

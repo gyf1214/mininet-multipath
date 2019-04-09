@@ -159,11 +159,13 @@ func (c *client) doGetPage(req har.Request) {
 
 // very slow implementation
 func (c *client) initiate(url string) {
+	log.Println(len(db.data))
 	for idx, ent := range db.data {
 		if db.vis[idx] {
 			continue
 		}
 		initiator := getInitiator(ent.Initiator)
+		log.Println(encodeHeaderHAR(ent.Request.Headers), initiator)
 		if initiator == url {
 			db.vis[idx] = true
 			c.wg.Add(1)

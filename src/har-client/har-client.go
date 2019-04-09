@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 	"os"
+
+	"github.com/lucas-clemente/quic-go"
 )
 
 var (
@@ -16,6 +18,7 @@ func initiate() error {
 	if err != nil {
 		return err
 	}
+	defer cl.close()
 	cl.initiate("")
 	cl.wg.Wait()
 	return nil
@@ -32,10 +35,11 @@ func initDB() error {
 
 func main() {
 	flag.Parse()
+	quic.SetLogLevel("info")
 
 	err := initDB()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	log.Fatal(initiate())
 }

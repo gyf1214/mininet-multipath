@@ -9,14 +9,14 @@ class MPQuicExe(Exe):
         Exe.__init__(self, "mpquic")
         self.topo = topo
         self.size = size
+        self.port = ":6121"
+        self.server = PREFIX + str(self.topo.paths) + ".1" + self.port
     
     def run(self):
-        port = ":6121"
-        server = PREFIX + str(self.topo.paths) + ".1" + port
-        spid = self.logRun(self.topo.server, "server", 'bin/server -size=' + str(self.size) + ' -listen="' + port + '"', True)
+        spid = self.logRun(self.topo.server, "server", 'bin/server -size=' + str(self.size) + ' -listen="' + self.port + '"', True)
 
         st = time()
-        self.logRun(self.topo.client, "client", 'bin/client -url="https://' + server + '"')
+        self.logRun(self.topo.client, "client", 'bin/client -url="https://' + self.server + '"')
         st = time() - st
 
         bd = self.size / st * 8.0 / 1000.0
@@ -26,6 +26,20 @@ class MPQuicExe(Exe):
         kill(self.topo.server, spid)
 
         return bd
+
+    def runHar(self, harFile):
+        spid = self.logRun(self.topo.server, "har-server", 'bin/har-server -har="' + harFile + '" -listen="' + self.port + '"', True)
+
+        st = time()
+        self.logRun(self.topo.client, "har-client", 'bin/har-client -har="' + harFile + '" -addr="' + self.server + '"')
+        st = time() - st
+
+        print("time: %.2f" % st)
+
+        sleep(0.1)
+        kill(self.topo.server, spid)
+        return st
+
     
     def runBatch(self, setting, test):
         # line buffer
@@ -51,9 +65,13 @@ if __name__ == "__main__":
     # CLI
     # topo.getCLI()
 
-    # batch test
+    # har test
     exe = MPQuicExe(topo, SIZE)
-    exe.runBatch(SETTINGS, TESTS)
+    exe.runHar("bin/www.google.com.har")
+
+    # batch test
+    # exe = MPQuicExe(topo, SIZE)
+    # exe.runBatch(SETTINGS, TESTS)
 
     # small test
     # exe = MPQuicExe(topo, SIZE)
