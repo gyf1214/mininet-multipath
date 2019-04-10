@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/CyrusBiotechnology/go-har"
 	"github.com/lucas-clemente/quic-go"
@@ -40,6 +41,7 @@ type client struct {
 	header    quic.Stream
 	dataChans map[int]chan int
 	wg        sync.WaitGroup
+	connTime  time.Time
 }
 
 func dial(addr string) (*client, error) {
@@ -61,6 +63,7 @@ func dial(addr string) (*client, error) {
 		sess:      sess,
 		header:    header,
 		dataChans: make(map[int]chan int),
+		connTime:  time.Now(),
 	}
 	go c.handleHeader()
 
@@ -108,6 +111,8 @@ func (c *client) handleHeader() error {
 }
 
 func (c *client) getPage(req har.Request) error {
+	st := time.Now()
+
 	data, err := c.sess.OpenStreamSync()
 	if err != nil {
 		return err
@@ -146,7 +151,8 @@ func (c *client) getPage(req har.Request) error {
 			return err
 		}
 	}
-	log.Printf("finish stream %v", sid)
+
+	log.Printf("finish stream %v, completion time: %v, total delay: %v", sid, time.Since(st), time.Since(c.connTime))
 
 	c.initiate(req.Url)
 

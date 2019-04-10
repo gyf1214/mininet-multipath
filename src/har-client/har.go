@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/CyrusBiotechnology/go-har"
 )
@@ -29,7 +30,9 @@ func checkEnt(ent har.Entry) bool {
 	}
 	for _, header := range ent.Response.Headers {
 		if header.Name == "content-length" {
-			hasLength = true
+			if n, err := strconv.Atoi(header.Value); n > 0 && err == nil {
+				hasLength = true
+			}
 			break
 		}
 	}

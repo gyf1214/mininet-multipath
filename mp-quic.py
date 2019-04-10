@@ -66,6 +66,8 @@ if __name__ == "__main__":
     # topo.getCLI()
 
     # har test
+    topo.configBothLink(0, 5000, 10000)
+    topo.configBothLink(1, 5000, 10000)
     exe = MPQuicExe(topo, SIZE)
     exe.runHar("bin/www.google.com.har")
 
