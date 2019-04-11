@@ -18,13 +18,17 @@ class Exe(object):
         if not path.exists(self.path):
             makedirs(self.path)
     
-    def logRun(self, host, name, c, bg=False):
-        c = c + " > " + self.path + "/" + name + ".log 2>&1"
+    def logRun(self, host, name, c, bg=False, output=False):
+        c = c + " 2> " + self.path + "/" + name + ".log"
+        if not output:
+            c = c + " >&2"
         if bg:
             c = c + " &"
-        cmd(host, c)
+        std = cmd(host, c)
         if bg:
             return int(cmd(host, "echo $!"))
+        if output:
+            return std
     
     def run(self):
         raise NotImplementedError

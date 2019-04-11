@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -152,7 +153,11 @@ func (c *client) getPage(req har.Request) error {
 		}
 	}
 
-	log.Printf("finish stream %v, completion time: %v, total delay: %v", sid, time.Since(st), time.Since(c.connTime))
+	now := time.Now()
+	completion := now.Sub(st)
+	delay := now.Sub(c.connTime)
+	log.Printf("finish stream %v, completion time: %v, total delay: %v", sid, completion, delay)
+	fmt.Println(sid, int(completion/time.Microsecond), int(delay/time.Microsecond))
 
 	c.initiate(req.Url)
 

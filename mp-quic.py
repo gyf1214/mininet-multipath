@@ -28,17 +28,19 @@ class MPQuicExe(Exe):
         return bd
 
     def runHar(self, harFile):
+        fout = open(self.path + "/batch.log", "w", 1)
         spid = self.logRun(self.topo.server, "har-server", 'bin/har-server -har="' + harFile + '" -listen="' + self.port + '"', True)
 
-        st = time()
-        self.logRun(self.topo.client, "har-client", 'bin/har-client -har="' + harFile + '" -addr="' + self.server + '"')
-        st = time() - st
+        # st = time()
+        out = self.logRun(self.topo.client, "har-client", 'bin/har-client -har="' + harFile + '" -addr="' + self.server + '"', output=True)
+        fout.write(out)
+        # st = time() - st
 
-        print("time: %.2f" % st)
+        # print("time: %.2f" % st)
 
         sleep(0.1)
         kill(self.topo.server, spid)
-        return st
+        fout.close()
 
     
     def runBatch(self, setting, test):
