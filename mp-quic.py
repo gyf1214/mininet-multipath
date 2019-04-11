@@ -29,10 +29,10 @@ class MPQuicExe(Exe):
 
     def runHar(self, harFile):
         fout = open(self.path + "/batch.log", "w", 1)
-        spid = self.logRun(self.topo.server, "har-server", 'bin/har-server -har="' + harFile + '" -listen="' + self.port + '"', True)
+        spid = self.logRun(self.topo.server, "sim-server", 'bin/sim-server -har="' + harFile + '" -listen="' + self.port + '"', True)
 
         # st = time()
-        out = self.logRun(self.topo.client, "har-client", 'bin/har-client -har="' + harFile + '" -addr="' + self.server + '"', output=True)
+        out = self.logRun(self.topo.client, "sim-client", 'bin/sim-client -har="' + harFile + '" -addr="' + self.server + '"', output=True)
         fout.write(out)
         # st = time() - st
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     topo.configBothLink(0, 5000, 10000)
     topo.configBothLink(1, 5000, 10000)
     exe = MPQuicExe(topo, SIZE)
-    exe.runHar("bin/www.google.com.har")
+    exe.runHar("bin/www.google.com.json")
 
     # batch test
     # exe = MPQuicExe(topo, SIZE)
