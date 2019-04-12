@@ -7,6 +7,7 @@ SETTING = {
 
 HAR = {
     "google": "bin/www.google.com.json",
+    "amazon": "bin/www.amazon.com.json",
 }
 
 BATCH = 20
