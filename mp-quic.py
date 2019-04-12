@@ -28,7 +28,8 @@ class MPQuicExe(Exe):
 
     def runHar(self, harFile, output="batch.log"):
         fout = open(self.path + "/" + output, "w", 1)
-        spid = self.logRun(self.topo.server, "sim-server", 'bin/sim-server -har="' + harFile + '" -listen="' + self.port + '"', True)
+        spid = self.logRun(self.topo.server, "sim-server", 'bin/sim-server -har="' + harFile + '" -listen="' + self.port + '"', bg=True)
+        sleep(0.1)
 
         # st = time()
         out = self.logRun(self.topo.client, "sim-client", 'bin/sim-client -har="' + harFile + '" -addr="' + self.server + '"', output=True)

@@ -23,14 +23,16 @@ for e in ent:
     if not '_initiator' in e:
         continue
     cur = dict()
-    cur['connection'] = int(e['_client_port'])
+    # cur['connection'] = int(e['_client_port'])
+    cur['connection'] = 12345
     cur['url'] = e['_full_url']
     cur['initiator'] = e['_initiator']
     if cur['initiator'] == cur['url']:
         cur['initiator'] = ''
     cur['size'] = max(int(e['_objectSize']), 1)
     cur['stream'] = int(e['_http2_stream_id'])
-    cur['dependency'] = int(e.get('_http2_stream_dependency', 0))
+    # cur['dependency'] = int(e.get('_http2_stream_dependency', 0))
+    cur['dependency'] = 0
     cur['weight'] = int(e.get('_http2_stream_weight', 1))
     
     req = cur['request'] = list()
@@ -57,5 +59,5 @@ for e in ent:
 
     ret.append(cur)
 
-json.dump(ret, sys.stdout)
+json.dump(ret, sys.stdout, indent=2)
 fin.close()

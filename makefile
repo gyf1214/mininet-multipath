@@ -11,7 +11,8 @@ clean :
 force: clean all
 
 sync:
-	rsync -avz --delete ./ mininet-vm:~/sync/
+	rsync -avz --delete ./ xia:~/result/mininet/
+	ssh xia "rsync -avz --delete ~/result/mininet/ mininet:~/sync/"
 
 bin/% : src/%
 	GOOS=linux GOARCH=amd64 go build -o $@ ./$<

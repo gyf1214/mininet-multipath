@@ -18,8 +18,11 @@ class Exe(object):
         if not path.exists(self.path):
             makedirs(self.path)
     
-    def logRun(self, host, name, c, bg=False, output=False):
-        c = c + " 2> " + self.path + "/" + name + ".log"
+    def logRun(self, host, name, c, bg=False, output=False, log=True):
+        if log:
+            c = c + " 2> " + self.path + "/" + name + ".log"
+        else:
+            c = c + " 2> /dev/null"
         if not output:
             c = c + " >&2"
         if bg:
