@@ -1,4 +1,4 @@
-targets=client server har-server har-client sim-client sim-server
+targets=client server sim-client sim-server
 bins=$(patsubst %,bin/%,$(targets))
 
 default: force sync
