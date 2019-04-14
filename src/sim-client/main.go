@@ -15,6 +15,7 @@ var (
 
 func main() {
 	flag.Parse()
+	log.SetFlags(log.Lmicroseconds | log.LstdFlags)
 	quic.SetLogLevel("info")
 
 	cl, err := h2quicsim.NewClient(h2quicsim.LoadObjectsPath(*harFile))
