@@ -2,7 +2,7 @@ from __future__ import print_function
 from time import sleep, time
 from network.exe import Exe, kill
 from network.topo import MPTopo, PREFIX, log
-from settings import SETTING, HAR, BATCH
+from settings import SETTING, HAR, BATCH, LOG
 
 class MPQuicExe(Exe):
     def __init__(self, topo):
@@ -28,11 +28,11 @@ class MPQuicExe(Exe):
 
     def runHar(self, harFile, output="batch.log"):
         fout = open(self.path + "/" + output, "w", 1)
-        spid = self.logRun(self.topo.server, "sim-server", 'bin/sim-server -har="' + harFile + '" -listen="' + self.port + '"', bg=True, log=False)
+        spid = self.logRun(self.topo.server, "sim-server", 'bin/sim-server -har="' + harFile + '" -listen="' + self.port + '"', bg=True, log=LOG)
         sleep(0.1)
 
         # st = time()
-        out = self.logRun(self.topo.client, "sim-client", 'bin/sim-client -har="' + harFile + '" -addr="' + self.server + '"', output=True, log=False)
+        out = self.logRun(self.topo.client, "sim-client", 'bin/sim-client -har="' + harFile + '" -addr="' + self.server + '"', output=True, log=LOG)
         fout.write(out)
         # st = time() - st
 

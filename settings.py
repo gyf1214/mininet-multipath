@@ -6,11 +6,14 @@ SETTING = {
 }
 
 HAR = {
-    # "google": "bin/www.google.com.json",
-    "amazon": "bin/amazon2.json",
+    "google": "bin/google2.json",
+    "amazon": "bin/amazon3.json",
 }
 
 BATCH = 20
 # BATCH = 1
 
 SIZE = 20 * 1024 * 1024
+
+# LOG = True
+LOG = False
