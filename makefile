@@ -12,10 +12,10 @@ force: clean all
 
 sync:
 	rsync -avz --delete ./ xia:~/result/mininet/
-	ssh xia "rsync -avz --delete ~/result/mininet/ mininet:~/sync/"
+	ssh xia "rsync -avz --delete ~/result/mininet/ mininet:~/sync-saecf/"
 	# rsync -avz --delete ./ mininet-vm:~/sync/
-	# rsync -avz --delete ./ mpquic.aliyun:~/sync/
-	# rsync -avz --delete ./ xia.client:~/sync/
+	# rsync -avz --delete ./ mpquic.aliyun:~/sync-saecf/
+	# rsync -avz --delete ./ xia.client:~/sync-saecf/
 	
 
 bin/% : src/%

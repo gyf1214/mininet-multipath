@@ -6,7 +6,7 @@ SETTING = {
 }
 
 HAR = {
-    "google": "bin/google.json",
+    # "google": "bin/google.json",
     "amazon": "bin/amazon.json",
 }
 
