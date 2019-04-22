@@ -18,7 +18,7 @@ var (
 func main() {
 	flag.Parse()
 	log.SetFlags(log.Lmicroseconds | log.LstdFlags)
-	quic.SetLogLevel("info")
+	quic.SetLogLevel("debug")
 
 	lis, err := h2quicsim.NewServer(h2quicsim.LoadObjectsPath(*harFile))
 	if err != nil {
